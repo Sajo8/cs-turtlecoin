@@ -8,16 +8,18 @@ using Canti.Utilities;
 
 namespace Canti.Blockchain.Commands
 {
-    class NotifyRequestChain
+    public class RequestChainEntry
     {
         // Command ID
-        public const int Id = GlobalsConfig.CRYPTONOTE_COMMANDS_BASE + 6;
+        public const int Id = Globals.CRYPTONOTE_COMMANDS_BASE + 7;
 
         // Outgoing request structure
         public struct Request : ICommandRequestBase
         {
             // Variables
-            public string[] BlockIds;
+            public uint StartHeight;
+            public uint TotalHeight;
+            public string[] MBlockIds;
 
             // Serializes request data into a byte array
             public byte[] Serialize()
@@ -26,7 +28,9 @@ namespace Canti.Blockchain.Commands
                 PortableStorage Storage = new PortableStorage();
 
                 // Add entries
-                Storage.AddEntryAsBinary("txs", BlockIds);
+                Storage.AddEntry("start_height", StartHeight);
+                Storage.AddEntry("total_height", TotalHeight);
+                Storage.AddEntryAsBinary("m_block_ids", MBlockIds);
 
                 // Return serialized byte array
                 return Storage.Serialize();
@@ -42,7 +46,9 @@ namespace Canti.Blockchain.Commands
                 // Populate and return new response
                 return new Request
                 {
-                    BlockIds = Hashing.DeserializeHashArray((string)Storage.GetEntry("block_ids"))
+                    StartHeight = (uint)Storage.GetEntry("start_height"),
+                    TotalHeight = (uint)Storage.GetEntry("total_height"),
+                    MBlockIds = Hashing.DeserializeHashArray((string)Storage.GetEntry("m_block_ids"))
                 };
             }
         }
@@ -57,11 +63,13 @@ namespace Canti.Blockchain.Commands
                 Request Request = Request.Deserialize(Command.Data);
 
                 // debug
-                Context.Logger?.Log(Level.DEBUG, "[IN] Received \"Notify Request Chain\" Request:");
+                Context.Logger?.Log(Level.DEBUG, "[IN] Received \"Notify Request Chain Entry\" Request:");
                 Context.Logger?.Log(Level.DEBUG, "- Response Requested: {0}", !Command.IsNotification);
-                Context.Logger?.Log(Level.DEBUG, "- TXs:");
-                for (int i = 0; i < Request.BlockIds.Length; i++)
-                    Context.Logger?.Log(Level.DEBUG, "  - [{0}]: {1}", i, Request.BlockIds[i]);
+                Context.Logger?.Log(Level.DEBUG, "- Start Height: {0}", Request.StartHeight);
+                Context.Logger?.Log(Level.DEBUG, "- Total Height: {0}", Request.TotalHeight);
+                Context.Logger?.Log(Level.DEBUG, "- M Block IDs:");
+                for (int i = 0; i < Request.MBlockIds.Length; i++)
+                    Context.Logger?.Log(Level.DEBUG, "  - [{0}]: {1}", i, Request.MBlockIds[i]);
 
                 // TODO: Do something with request data
             }

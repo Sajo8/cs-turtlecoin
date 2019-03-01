@@ -9,7 +9,7 @@ using System.Runtime.Serialization.Json;
 
 namespace Canti.Data
 {
-    public static class Serialization
+    public static class JsonSerialization
     {
         public static string SerializeObjectToJson(object Input)
         {
